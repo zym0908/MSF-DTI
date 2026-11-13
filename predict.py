@@ -25,7 +25,7 @@ if __name__ == '__main__':
     file = 'data/ind_test.csv'
     vocab = WordVocab.load_vocab(f'data/BioSNAP_vocab.pkl')
     test_iter = load_ind_data(file,vocab)
-    path_pretrain_model = "Model/MSF_DTI_BioSNAP_model.pt"
+    path_pretrain_model = "Result/MSF_DTI_BioSNAP_model.pt"
     model = DrugTargetModel().to(device)
     model = load_model(model, path_pretrain_model)
     model.eval()

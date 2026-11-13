@@ -62,7 +62,7 @@ class EarlyStopping:
         path = 'best_network.pt'
         torch.save(model.state_dict(), path)
 
-def train_test(train_iter, val_iter, ind_iter):
+def train_test(train_iter, val_iter):
     global best_ROC
     net = DrugTargetModel().to(device)
     lr = 0.0001
@@ -77,7 +77,6 @@ def train_test(train_iter, val_iter, ind_iter):
     best_PRC = 0
     best_results = []
     best_performance = []
-    best_ind_performance = []
 
     for epoch in range(EPOCH):
         loss_ls = []
@@ -106,7 +105,6 @@ def train_test(train_iter, val_iter, ind_iter):
         with torch.no_grad():
             train_performance, _, _, _ = evaluate(train_iter, net)
             val_performance, val_roc_data, val_prc_data, label_real = evaluate(val_iter, net)
-            ind_performance, _, _, _ = evaluate(ind_iter, net)
 
         results = f"\nepoch: {epoch + 1}, loss: {np.mean(loss_ls):.5f}\n"
         results += f'train_acc: {train_performance[0]:.4f}, time: {time.time() - t0:.2f}'
@@ -115,26 +113,16 @@ def train_test(train_iter, val_iter, ind_iter):
             val_performance[0], val_performance[1], val_performance[2], val_performance[3],
             val_performance[4]) + '\n' + '=' * 60
         print(results)
-
-        ind_res_str = '{:.4f},\t{:.4f},\t{:.4f},\t{:.4f},\t{:.4f}'.format(
-            ind_performance[0], ind_performance[1], ind_performance[2],
-            ind_performance[3], ind_performance[4]
-        )
-        print(f"Independent Test Performance: {ind_res_str}")
-
         val_acc = val_performance[0]
-        ind_acc = ind_performance[0]
-        ind_auroc = ind_performance[1]
 
-        if ind_acc > 0.70:
-            filename = 'Model_ValACC[{:.4f}]_IndACC[{:.4f}]_IndAUROC[{:.4f}].pt'.format(val_acc, ind_acc, ind_auroc)
+        if val_acc > 0.70:
+            filename = 'Model_ValACC[{:.4f}].pt'.format(val_acc)
             save_path_pt = os.path.join('./Result-42', filename)
             torch.save(net.state_dict(), save_path_pt, _use_new_zipfile_serialization=False)
         scheduler.step(val_acc)
         if val_acc > best_acc:
             best_acc = val_acc
             best_performance = val_performance
-            best_ind_performance = ind_performance
             best_ROC = val_roc_data
             best_PRC = val_prc_data
             best_results = '\n' + '=' * 16 + colored(' Best Performance. Epoch[{}] ', 'red').format(
@@ -142,10 +130,6 @@ def train_test(train_iter, val_iter, ind_iter):
                            + '\n[ACC,\tAUROC,\t\tAUPRC,\t\tF1,\tSensitivity-Recall]\n' + '{:.4f},\t{:.4f},\t{:.4f},\t{:.4f},\t{:.4f}' \
                                .format(best_performance[0], best_performance[1], best_performance[2],
                                        best_performance[3], best_performance[4]) \
-                           + '\n' + colored('Corresponding Independent Test Performance:', 'green') \
-                           + '\n[ACC,\tAUROC,\t\tAUPRC,\t\tF1,\tSensitivity-Recall]\n' + '{:.4f},\t{:.4f},\t{:.4f},\t{:.4f},\t{:.4f}' \
-                               .format(best_ind_performance[0], best_ind_performance[1], best_ind_performance[2],
-                                       best_ind_performance[3], best_ind_performance[4]) \
                            + '\n' + '=' * 60
         early_stopping(val_acc, net)
         if early_stopping.early_stop:
@@ -166,7 +150,7 @@ def train_test(train_iter, val_iter, ind_iter):
     print(best_results)
     return best_performance, best_results, best_ROC, best_PRC
 
-def train_fixed_split(train_file,val_file,test_file,vocab):
+def train_fixed_split(train_file,val_file,vocab):
     train_df = pd.read_csv(train_file)
     train_smiles = train_df['smiles']
     train_protein = train_df["protein"]
@@ -179,18 +163,10 @@ def train_fixed_split(train_file,val_file,test_file,vocab):
     val_labels = val_df['labels']
     val_smiles, val_protein, val_labels = np.array(val_smiles), np.array(val_protein), np.array(val_labels)
 
-    ind_df = pd.read_csv(ind_file)
-    ind_smiles = ind_df['smiles']
-    ind_protein = ind_df["protein"]
-    ind_labels = ind_df['labels']
-    ind_smiles, ind_protein, ind_labels = np.array(ind_smiles), np.array(ind_protein), np.array(ind_labels)
-
     train_iter = construct_dataset(train_smiles, train_protein, train_labels, vocab, train=True)
     val_iter = construct_dataset(val_smiles, val_protein, val_labels, vocab, train=False)
 
-    ind_iter = construct_dataset(ind_smiles, ind_protein, ind_labels, vocab, train=False)
-
-    best_performance, best_results, ROC, PRC = train_test(train_iter, val_iter, ind_iter)
+    best_performance, best_results, ROC, PRC = train_test(train_iter, val_iter)
 
     print('\n' + '=' * 16 + colored(' Final Performance ', 'red') + '=' * 16)
     print('[ACC,\tAUROC,\t\tAUPRC,\t\tF1,\tSensitivity-Recall]')
@@ -204,11 +180,9 @@ def train_fixed_split(train_file,val_file,test_file,vocab):
 if __name__ == '__main__':
     train_file = 'data/train.csv'
     val_file = 'data/val_test.csv'
-    ind_file = 'data/ind_test.csv'
     vocab = WordVocab.load_vocab(f'data/BioSNAP_vocab.pkl')
     best_performance, best_results = train_fixed_split(
         train_file,
         val_file,
-        ind_file,
         vocab
     )
