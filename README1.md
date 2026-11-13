@@ -1,55 +1,47 @@
-# NeuroPred-PSCG
+# MSF-DTI
 
-This repository contains code for "**NeuroPpred-PSCG: A multimodal framework for neuropeptide prediction via bidirectional cross-attention and gated convolution of ProtT5 and structural features**.
-![image](https://github.com/xinyizhang186/NeuroPpred-PSCG/blob/main/model.png)
+This repository contains the implementation of **MSF-DTI: A Multimodal Sparse Fusion Framework Integrating Pre-trained Language Models and Dynamic Graph Networks for Drug-Target Interaction Prediction**.
+![image](https://github.com/zym0908/MSF-DTI/blob/main/model.png)
 Please see our manuscript for more details.
 
 ## 1 Requirements
 
-Before running, please create a new environment using this command:
+Before running the code, create and activate a Python environment:
 
 ```python
-conda create -n NeuroPred-PSCG python=3.10
-conda activate NeuroPred-PSCG
+conda create -n MSF-DTI python=3.7
+conda activate MSF-DTI
 ```
 
-Next, run the following command to install the required packages:
+Install the required dependencies according to your environment and the packages used in the source code:
 
 ```python
-cd NeuroPred-PSCG
+cd MSF-DTI
 pip install -r requirements.txt --no-cache-dir
 ```
 
-# 2 Running
+## 2 Project Structure
 
-- **`dataset/`**: Ccomprises two folders, `NeuroP_data` and `NeuroP_feature`. Among these, the imbalanced dataset (*3755.txt*) comprises labels distributed as [1]409 + [0]2290+ [1]45+ [0]252+ [1]115+[0]644.
-- **`protT5/`**: Extracts ProtT5-based embeddings from protein sequences.
-- **`demo/`**: Provides example notebooks (train.ipynb and predict.ipynb) for model training and inference.
-- **`util/`**:
-- `csv_to_fasta.py`：Converts CSV files into FASTA format.
-- `data_loader.py`: Handles data loading and preprocessing.
-- `util_metric.py`: Computes and evaluates model performance metrics.
+- **`bert/`**: Stores files related to the KB-BERT drug pre-trained language model. 
+- **`datasets/`**: Stores the datasets required for drug–target interaction prediction, primarily including three publicly available datasets: `BioSNAP`, `DrugBank`, and `BindingDB`. Each dataset typically contains the SMILES representations of drug molecules (`smiles`), protein amino acid sequences (`protein`), and interaction labels (`labels`, with values of 0 or 1).
+- **`demo/`**: Stores usage examples of the model, including sample data, ProtT5 and KB-BERT feature extraction examples, model prediction examples, and the prediction results file `predict.csv`.
+- **`Result/`**: Stores the trained model weights.
 
 In addition, the main scripts and files are as follows:
-
+- **`readData.py`**: Raw Data Preprocessing Module, responsible for converting raw SMILES representations and protein sequences into features required by the model.
+- **`MCPdataset.py`**: Dataset Construction and Batch Processing Module.
 - **`requirements.txt`**: Lists all dependencies and their versions for quick environment setup.
-- **`model.py`**: Defines the NeuroPred-PSCG model architecture.
-- **`train.py`**: Training script can be run directly to train the model.
-- **`predict.py`**: Testing script can be run directly to evaluate the model and reproduce results.
+- **`Mymodel.py`**: Overall Architecture of MSF-DTI, comprising the drug feature extraction module (`smiles_model.py`), the protein feature extraction module (`protein_model.py`), and other core components.
+- **`train.py`**: Trains the MSF-DTI model and generates the checkpoint required for subsequent predictions.
+- **`predict.py`**: Evaluates model performance on the test set.
 
-If you aim to train the NeuroPred-PSCG model or use a successfully trained model for testing, please run the following code:
+## 3 Quick Start
+Run the following commands to train and evaluate the MSF-DTI model.
 
 ```python
 python train.py 
 python predict.py
 ```
+You can also refer to **`demo/predict.ipynb `** for usage examples.
 
-# 3 Predict
-
-To predict neuropeptides from your FASTA sequences, please follow these steps:
-
-1. **Generate Features**: First, encode your input sequences into ProtT5 embeddings and 8-state secondary structure (SS8) features. The scripts for this process are located in the `ProtT5` directory.
-2. **Run Prediction**: Once the features are generated, specify their path within the `predict.py` script and execute it to obtain the prediction labels.
-
-Refer to **`demo/predict.ipynb `** for a usage example.
 
