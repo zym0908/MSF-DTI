@@ -1,7 +1,7 @@
 # MSF-DTI
 
 This repository contains the implementation of **MSF-DTI: A Multimodal Sparse Fusion Framework Integrating Pre-trained Language Models and Dynamic Graph Networks for Drug-Target Interaction Prediction**.
-![image](https://github.com/zym0908/MSF-DTI/blob/main/model.png)
+![MSF-DTI Framework Diagram.png](model.jpg)
 Please see our manuscript for more details.
 
 ## 1 Requirements
